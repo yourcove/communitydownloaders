@@ -22,7 +22,7 @@ public sealed class CommonTextDownloaderExtension : IDownloaderProvider
 
     public string Id => ExtensionId;
     public string Name => "Common Text Downloader";
-    public string Version => "1.0.0";
+    public string Version => OfficialDownloaderUtilities.GetExtensionVersion(typeof(CommonTextDownloaderExtension));
     public string? Description => "Downloads stories from common text sites. Currently supports Literotica.";
     public string? Author => "Cove Team";
     public string? Url => OfficialDownloaderUtilities.RepoUrl;

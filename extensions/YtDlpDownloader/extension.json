@@ -17,18 +17,16 @@
       "id": "yt-dlp",
       "name": "yt-dlp",
       "description": "Command line downloader used for generic video and audio sites.",
-      "optional": false,
-      "settingsKey": "ytDlpPath"
+      "required": true,
+      "configurationKeys": ["ytDlpPath"]
     }
   ],
   "settings": [
     {
-      "key": "ytDlpPath",
-      "label": "yt-dlp executable path",
-      "type": "string",
-      "defaultValue": "yt-dlp",
+      "name": "ytDlpPath",
+      "displayName": "yt-dlp executable path",
+      "type": "STRING",
       "description": "Path to yt-dlp, or yt-dlp when it is available on PATH.",
-      "scope": "extension",
       "extensionIds": ["cove.official.downloaders.ytdlp"]
     }
   ]

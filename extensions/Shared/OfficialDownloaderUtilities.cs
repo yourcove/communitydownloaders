@@ -1,4 +1,5 @@
 using System.Net;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace Cove.Extensions.CommunityDownloaders;
@@ -12,6 +13,22 @@ internal static class OfficialDownloaderUtilities
     private static readonly Regex UrlRegex = new(@"https?://[^\s<>""'\)\]\}]+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public sealed record BracketedMetadata(string Title, string? Details, List<string> TagNames);
+
+    public static string GetExtensionVersion(Type extensionType)
+    {
+        ArgumentNullException.ThrowIfNull(extensionType);
+
+        var assembly = extensionType.Assembly;
+        var informationalVersion = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion?
+            .Split('+', 2, StringSplitOptions.TrimEntries)[0];
+
+        if (!string.IsNullOrWhiteSpace(informationalVersion))
+            return informationalVersion;
+
+        return assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+    }
 
     public static bool IsHttpUrl(string url)
     {

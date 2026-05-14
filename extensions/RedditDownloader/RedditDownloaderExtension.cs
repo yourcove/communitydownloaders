@@ -31,7 +31,7 @@ public sealed class RedditDownloaderExtension : IDownloaderProvider
 
     public string Id => ExtensionId;
     public string Name => "Reddit Downloader";
-    public string Version => "1.0.0";
+    public string Version => OfficialDownloaderUtilities.GetExtensionVersion(typeof(RedditDownloaderExtension));
     public string? Description => "Downloads Reddit-hosted post media and diverts linked URLs to other registered downloaders.";
     public string? Author => "Cove Team";
     public string? Url => OfficialDownloaderUtilities.RepoUrl;

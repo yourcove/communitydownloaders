@@ -14,6 +14,52 @@ function isLowerKebab(value) {
   return value === value.toLowerCase() && !value.includes(" ");
 }
 
+function validateExternalDependencies(extensionId, manifest) {
+  if (manifest.externalDependencies == null) return;
+  if (!Array.isArray(manifest.externalDependencies)) {
+    errors.push(`${extensionId}: extension.json externalDependencies must be an array`);
+    return;
+  }
+
+  for (const dependency of manifest.externalDependencies) {
+    if (!dependency?.id) errors.push(`${extensionId}: external dependency missing id`);
+    if (!dependency?.name) errors.push(`${extensionId}: external dependency missing name`);
+    if (Object.prototype.hasOwnProperty.call(dependency, "optional")) {
+      errors.push(`${extensionId}: external dependency uses legacy optional; use required`);
+    }
+    if (Object.prototype.hasOwnProperty.call(dependency, "settingsKey")) {
+      errors.push(`${extensionId}: external dependency uses legacy settingsKey; use configurationKeys`);
+    }
+    if (dependency.configurationKeys != null && !Array.isArray(dependency.configurationKeys)) {
+      errors.push(`${extensionId}: external dependency configurationKeys must be an array`);
+    }
+  }
+}
+
+function validateSettings(extensionId, manifest) {
+  if (manifest.settings == null) return;
+  if (!Array.isArray(manifest.settings)) {
+    errors.push(`${extensionId}: extension.json settings must be an array`);
+    return;
+  }
+
+  for (const setting of manifest.settings) {
+    if (!setting?.name) errors.push(`${extensionId}: setting missing name`);
+    if (Object.prototype.hasOwnProperty.call(setting, "key")) {
+      errors.push(`${extensionId}: setting uses legacy key; use name`);
+    }
+    if (Object.prototype.hasOwnProperty.call(setting, "label")) {
+      errors.push(`${extensionId}: setting uses legacy label; use displayName`);
+    }
+    if (Object.prototype.hasOwnProperty.call(setting, "defaultValue")) {
+      errors.push(`${extensionId}: setting uses legacy defaultValue; remove it from extension.json`);
+    }
+    if (Object.prototype.hasOwnProperty.call(setting, "scope")) {
+      errors.push(`${extensionId}: setting uses legacy scope; remove it from extension.json`);
+    }
+  }
+}
+
 const catalog = readJson(catalogPath);
 const entries = Array.isArray(catalog.extensions) ? catalog.extensions : [];
 
@@ -65,6 +111,9 @@ for (const entry of entries) {
       if (!isLowerKebab(category)) errors.push(`${entry.id}: category must be lowercase kebab-case: ${category}`);
     }
   }
+
+  validateExternalDependencies(entry.id, manifest);
+  validateSettings(entry.id, manifest);
 }
 
 if (errors.length > 0) {

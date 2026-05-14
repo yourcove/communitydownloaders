@@ -21,7 +21,7 @@ public sealed class CommonAudioDownloaderExtension : IDownloaderProvider
 
     public string Id => ExtensionId;
     public string Name => "Common Audio Downloader";
-    public string Version => "1.0.0";
+    public string Version => OfficialDownloaderUtilities.GetExtensionVersion(typeof(CommonAudioDownloaderExtension));
     public string? Description => "Downloads audio from common hosted-audio pages such as Soundgasm and Whyp.";
     public string? Author => "Cove Team";
     public string? Url => OfficialDownloaderUtilities.RepoUrl;

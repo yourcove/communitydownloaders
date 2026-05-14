@@ -71,11 +71,11 @@ jobs:
 
       - name: Build
         if: steps.check.outputs.match == 'true' && !matrix.extension.manifestOnly
-        run: dotnet build ${{ matrix.extension.path }} -c Release --no-restore -p:CovePluginsVersion=${{ env.COVE_PLUGINS_VERSION }} -p:CoveCoreVersion=${{ env.COVE_CORE_VERSION }}
+        run: dotnet build ${{ matrix.extension.path }} -c Release --no-restore -p:CovePluginsVersion=${{ env.COVE_PLUGINS_VERSION }} -p:CoveCoreVersion=${{ env.COVE_CORE_VERSION }} -p:Version=${{ steps.check.outputs.version }} -p:ContinuousIntegrationBuild=true
 
       - name: Publish
         if: steps.check.outputs.match == 'true' && !matrix.extension.manifestOnly
-        run: dotnet publish ${{ matrix.extension.path }} -c Release -o artifacts/${{ matrix.extension.name }} --no-build -p:CovePluginsVersion=${{ env.COVE_PLUGINS_VERSION }} -p:CoveCoreVersion=${{ env.COVE_CORE_VERSION }}
+        run: dotnet publish ${{ matrix.extension.path }} -c Release -o artifacts/${{ matrix.extension.name }} --no-build -p:CovePluginsVersion=${{ env.COVE_PLUGINS_VERSION }} -p:CoveCoreVersion=${{ env.COVE_CORE_VERSION }} -p:Version=${{ steps.check.outputs.version }} -p:ContinuousIntegrationBuild=true
 
       - name: Create manifest-only package root
         if: steps.check.outputs.match == 'true' && matrix.extension.manifestOnly
@@ -84,6 +84,11 @@ jobs:
       - name: Copy extension.json
         if: steps.check.outputs.match == 'true'
         run: cp ${{ matrix.extension.path }}/extension.json artifacts/${{ matrix.extension.name }}/
+
+      - name: Stamp packaged extension.json version
+        if: steps.check.outputs.match == 'true'
+        run: |
+          node -e "const fs=require('fs'); const file='artifacts/${{ matrix.extension.name }}/extension.json'; const json=JSON.parse(fs.readFileSync(file,'utf8')); json.version='${{ steps.check.outputs.version }}'; fs.writeFileSync(file, JSON.stringify(json, null, 2) + '\n');"
 
       - name: Package
         if: steps.check.outputs.match == 'true' && github.event_name != 'pull_request'

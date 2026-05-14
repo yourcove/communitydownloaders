@@ -48,7 +48,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
 
     public string Id => ExtensionId;
     public string Name => "yt-dlp Downloader";
-    public string Version => "1.0.0";
+    public string Version => OfficialDownloaderUtilities.GetExtensionVersion(typeof(YtDlpDownloaderExtension));
     public string? Description => "Generic yt-dlp-powered video and audio downloads.";
     public string? Author => "Cove Team";
     public string? Url => OfficialDownloaderUtilities.RepoUrl;
