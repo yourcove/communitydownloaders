@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup><FrameworkReference Include="Microsoft.AspNetCore.App" /></ItemGroup>
+  <ItemGroup>
+    <None Include="extension.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="Always" />
+    <Compile Include="..\Shared\OfficialDownloaderUtilities.cs" Link="OfficialDownloaderUtilities.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(UseLocalCovePlugins)' == 'false'"><PackageReference Include="Cove.Plugins" Version="$(CovePluginsVersion)" /></ItemGroup>
+  <ItemGroup Condition="'$(UseLocalCoveCore)' == 'false'"><PackageReference Include="Cove.Core" Version="$(CoveCoreVersion)" /></ItemGroup>
+  <ItemGroup Condition="'$(UseLocalCovePlugins)' == 'true'"><ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\cove\src\Cove.Plugins\Cove.Plugins.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\cove\src\Cove.Plugins\Cove.Plugins.csproj')"><Private>false</Private><ExcludeAssets>runtime</ExcludeAssets></ProjectReference></ItemGroup>
+  <ItemGroup Condition="'$(UseLocalCoveCore)' == 'true'"><ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\cove\src\Cove.Core\Cove.Core.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\cove\src\Cove.Core\Cove.Core.csproj')"><Private>false</Private><ExcludeAssets>runtime</ExcludeAssets></ProjectReference></ItemGroup>
+</Project>

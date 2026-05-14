@@ -1,0 +1,9 @@
+{
+  "name": "communitydownloaders",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "validate:extensions": "node scripts/validate-extension-repo.mjs"
+  }
+}

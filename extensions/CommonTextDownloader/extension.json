@@ -1,0 +1,14 @@
+{
+  "id": "cove.official.downloaders.common-text",
+  "name": "Common Text Downloader",
+  "version": "1.0.0",
+  "description": "Downloads stories from common text sites. Currently supports Literotica.",
+  "author": "Cove Team",
+  "url": "https://github.com/yourcove/communitydownloaders",
+  "minCoveVersion": "0.0.16",
+  "entryDll": "CommonTextDownloader.dll",
+  "categories": ["downloader", "text"],
+  "permissions": {
+    "network": ["literotica.com", "*.literotica.com"]
+  }
+}

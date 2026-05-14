@@ -1,0 +1,14 @@
+{
+  "id": "cove.official.downloaders.common-audio",
+  "name": "Common Audio Downloader",
+  "version": "1.0.0",
+  "description": "Downloads audio from common hosted-audio pages such as Soundgasm and Whyp.",
+  "author": "Cove Team",
+  "url": "https://github.com/yourcove/communitydownloaders",
+  "minCoveVersion": "0.0.16",
+  "entryDll": "CommonAudioDownloader.dll",
+  "categories": ["downloader", "audio"],
+  "permissions": {
+    "network": ["soundgasm.net", "*.soundgasm.net", "whyp.it", "*.whyp.it"]
+  }
+}

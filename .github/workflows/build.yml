@@ -1,0 +1,115 @@
+name: Build and Release Downloaders
+
+on:
+  push:
+    tags:
+      - 'common/v*'
+      - 'common-audio/v*'
+      - 'common-text/v*'
+      - 'reddit/v*'
+      - 'ytdlp/v*'
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  COVE_PLUGINS_VERSION: '0.0.16'
+  COVE_CORE_VERSION: '0.0.16'
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.catalog.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate extension catalog and manifests
+        run: node scripts/validate-extension-repo.mjs
+      - name: Build extension matrix
+        id: catalog
+        run: |
+          node -e "const fs=require('fs'); const catalog=require('./extensions/catalog.json'); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'matrix=' + JSON.stringify({ extension: catalog.extensions }) + '\n');"
+
+  build:
+    needs: validate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.validate.outputs.matrix) }}
+    steps:
+      - name: Check if this extension was tagged
+        id: check
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "match=true" >> "$GITHUB_OUTPUT"
+            echo "version=0.0.0" >> "$GITHUB_OUTPUT"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+            if [[ "$TAG" == "${{ matrix.extension.tagPrefix }}"* ]]; then
+              echo "match=true" >> "$GITHUB_OUTPUT"
+              echo "version=${TAG#${{ matrix.extension.tagPrefix }}v}" >> "$GITHUB_OUTPUT"
+            else
+              echo "match=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - uses: actions/checkout@v6
+        if: steps.check.outputs.match == 'true'
+
+      - name: Setup .NET
+        if: steps.check.outputs.match == 'true' && !matrix.extension.manifestOnly
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        if: steps.check.outputs.match == 'true' && !matrix.extension.manifestOnly
+        run: dotnet restore ${{ matrix.extension.path }} -p:CovePluginsVersion=${{ env.COVE_PLUGINS_VERSION }} -p:CoveCoreVersion=${{ env.COVE_CORE_VERSION }}
+
+      - name: Build
+        if: steps.check.outputs.match == 'true' && !matrix.extension.manifestOnly
+        run: dotnet build ${{ matrix.extension.path }} -c Release --no-restore -p:CovePluginsVersion=${{ env.COVE_PLUGINS_VERSION }} -p:CoveCoreVersion=${{ env.COVE_CORE_VERSION }}
+
+      - name: Publish
+        if: steps.check.outputs.match == 'true' && !matrix.extension.manifestOnly
+        run: dotnet publish ${{ matrix.extension.path }} -c Release -o artifacts/${{ matrix.extension.name }} --no-build -p:CovePluginsVersion=${{ env.COVE_PLUGINS_VERSION }} -p:CoveCoreVersion=${{ env.COVE_CORE_VERSION }}
+
+      - name: Create manifest-only package root
+        if: steps.check.outputs.match == 'true' && matrix.extension.manifestOnly
+        run: mkdir -p artifacts/${{ matrix.extension.name }}
+
+      - name: Copy extension.json
+        if: steps.check.outputs.match == 'true'
+        run: cp ${{ matrix.extension.path }}/extension.json artifacts/${{ matrix.extension.name }}/
+
+      - name: Package
+        if: steps.check.outputs.match == 'true' && github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          cd artifacts/${{ matrix.extension.name }}
+          zip -r ../../${{ matrix.extension.id }}-${{ steps.check.outputs.version }}.zip .
+
+      - name: Upload artifact
+        if: steps.check.outputs.match == 'true' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.extension.id }}
+          path: ${{ matrix.extension.id }}-*.zip
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: '*.zip'
+          generate_release_notes: true

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "extensions": [
+    {
+      "name": "CommonDownloadersBundle",
+      "id": "cove.official.downloaders",
+      "path": "extensions/CommonDownloadersBundle",
+      "tagPrefix": "common/",
+      "manifestOnly": true
+    },
+    {
+      "name": "CommonAudioDownloader",
+      "id": "cove.official.downloaders.common-audio",
+      "path": "extensions/CommonAudioDownloader",
+      "tagPrefix": "common-audio/"
+    },
+    {
+      "name": "CommonTextDownloader",
+      "id": "cove.official.downloaders.common-text",
+      "path": "extensions/CommonTextDownloader",
+      "tagPrefix": "common-text/"
+    },
+    {
+      "name": "RedditDownloader",
+      "id": "cove.official.downloaders.reddit",
+      "path": "extensions/RedditDownloader",
+      "tagPrefix": "reddit/"
+    },
+    {
+      "name": "YtDlpDownloader",
+      "id": "cove.official.downloaders.ytdlp",
+      "path": "extensions/YtDlpDownloader",
+      "tagPrefix": "ytdlp/"
+    }
+  ]
+}

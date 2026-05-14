@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/extensions/">
+    <Project Path="extensions/CommonAudioDownloader/CommonAudioDownloader.csproj" />
+    <Project Path="extensions/CommonTextDownloader/CommonTextDownloader.csproj" />
+    <Project Path="extensions/RedditDownloader/RedditDownloader.csproj" />
+    <Project Path="extensions/YtDlpDownloader/YtDlpDownloader.csproj" />
+  </Folder>
+</Solution>

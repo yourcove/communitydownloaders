@@ -1,0 +1,14 @@
+{
+  "id": "cove.official.downloaders.reddit",
+  "name": "Reddit Downloader",
+  "version": "1.0.0",
+  "description": "Downloads Reddit-hosted post media and delegates linked URLs to other registered downloaders.",
+  "author": "Cove Team",
+  "url": "https://github.com/yourcove/communitydownloaders",
+  "minCoveVersion": "0.0.16",
+  "entryDll": "RedditDownloader.dll",
+  "categories": ["downloader", "integration"],
+  "permissions": {
+    "network": ["reddit.com", "*.reddit.com", "redd.it", "*.redd.it", "redgifs.com", "*.redgifs.com", "redgif.com", "*.redgif.com", "i.redd.it", "v.redd.it", "preview.redd.it", "media.redgifs.com"]
+  }
+}
