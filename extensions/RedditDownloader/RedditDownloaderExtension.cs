@@ -7,10 +7,10 @@ namespace Cove.Extensions.CommunityDownloaders;
 
 public sealed class RedditDownloaderExtension : IDownloaderProvider
 {
-    private const string ExtensionId = "cove.official.downloaders.reddit";
-    private const string RedditImageDownloaderId = "cove.official.downloaders.reddit/image";
-    private const string RedditVideoDownloaderId = "cove.official.downloaders.reddit/video";
-    private const string DivertDownloaderId = "cove.official.downloaders.reddit/divert";
+    private const string ExtensionId = "cove.community.downloaders.reddit";
+    private const string RedditImageDownloaderId = "cove.community.downloaders.reddit/image";
+    private const string RedditVideoDownloaderId = "cove.community.downloaders.reddit/video";
+    private const string DivertDownloaderId = "cove.community.downloaders.reddit/divert";
     private static readonly string[] RedditUrlPatterns = ["reddit.com/*", "*.reddit.com/*", "redd.it/*", "*.redd.it/*"];
     private static readonly string[] RedgifsUrlPatterns = ["redgifs.com/*", "*.redgifs.com/*", "redgif.com/*", "*.redgif.com/*"];
     private IServiceProvider? _services;

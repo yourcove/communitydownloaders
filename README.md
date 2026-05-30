@@ -4,11 +4,11 @@ Community-maintained downloader extensions published through the official Cove e
 
 ## Extensions
 
-- `cove.official.downloaders` - manifest-only bundle that installs the common downloader set.
-- `cove.official.downloaders.common-audio` - Soundgasm and Whyp audio downloads.
-- `cove.official.downloaders.common-text` - Literotica text downloads.
-- `cove.official.downloaders.reddit` - Reddit-hosted media downloads and downloader delegation for linked posts.
-- `cove.official.downloaders.ytdlp` - generic video/audio downloads through `yt-dlp`.
+- `cove.community.downloaders` - manifest-only bundle that installs the common downloader set.
+- `cove.community.downloaders.common-audio` - Soundgasm and Whyp audio downloads.
+- `cove.community.downloaders.common-text` - Literotica text downloads.
+- `cove.community.downloaders.reddit` - Reddit-hosted media downloads and downloader delegation for linked posts.
+- `cove.community.downloaders.ytdlp` - generic video/audio downloads through `yt-dlp`.
 
 ## Development
 

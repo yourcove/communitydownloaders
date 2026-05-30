@@ -1,5 +1,5 @@
 {
-  "id": "cove.official.downloaders.reddit",
+  "id": "cove.community.downloaders.reddit",
   "name": "Reddit Downloader",
   "version": "1.0.0",
   "description": "Downloads Reddit-hosted post media and delegates linked URLs to other registered downloaders.",

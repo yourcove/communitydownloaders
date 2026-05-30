@@ -1,5 +1,5 @@
 {
-  "id": "cove.official.downloaders.common-audio",
+  "id": "cove.community.downloaders.common-audio",
   "name": "Common Audio Downloader",
   "version": "1.0.0",
   "description": "Downloads audio from common hosted-audio pages such as Soundgasm and Whyp.",

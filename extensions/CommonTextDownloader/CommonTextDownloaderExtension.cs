@@ -9,8 +9,8 @@ namespace Cove.Extensions.CommunityDownloaders;
 
 public sealed class CommonTextDownloaderExtension : IDownloaderProvider
 {
-    private const string ExtensionId = "cove.official.downloaders.common-text";
-    public const string TextDownloaderId = "cove.official.downloaders.common-text/literotica";
+    private const string ExtensionId = "cove.community.downloaders.common-text";
+    public const string TextDownloaderId = "cove.community.downloaders.common-text/literotica";
     private IServiceProvider? _services;
 
     private static readonly DownloaderDescriptor TextDownloader = new(

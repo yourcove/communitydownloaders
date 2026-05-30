@@ -3,32 +3,32 @@
   "extensions": [
     {
       "name": "CommonDownloadersBundle",
-      "id": "cove.official.downloaders",
+      "id": "cove.community.downloaders",
       "path": "extensions/CommonDownloadersBundle",
       "tagPrefix": "common/",
       "manifestOnly": true
     },
     {
       "name": "CommonAudioDownloader",
-      "id": "cove.official.downloaders.common-audio",
+      "id": "cove.community.downloaders.common-audio",
       "path": "extensions/CommonAudioDownloader",
       "tagPrefix": "common-audio/"
     },
     {
       "name": "CommonTextDownloader",
-      "id": "cove.official.downloaders.common-text",
+      "id": "cove.community.downloaders.common-text",
       "path": "extensions/CommonTextDownloader",
       "tagPrefix": "common-text/"
     },
     {
       "name": "RedditDownloader",
-      "id": "cove.official.downloaders.reddit",
+      "id": "cove.community.downloaders.reddit",
       "path": "extensions/RedditDownloader",
       "tagPrefix": "reddit/"
     },
     {
       "name": "YtDlpDownloader",
-      "id": "cove.official.downloaders.ytdlp",
+      "id": "cove.community.downloaders.ytdlp",
       "path": "extensions/YtDlpDownloader",
       "tagPrefix": "ytdlp/"
     }

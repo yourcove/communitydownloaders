@@ -14,9 +14,9 @@ namespace Cove.Extensions.CommunityDownloaders;
 
 public sealed class YtDlpDownloaderExtension : IDownloaderProvider
 {
-    private const string ExtensionId = "cove.official.downloaders.ytdlp";
-    private const string VideoDownloaderId = "cove.official.downloaders.ytdlp/video";
-    private const string AudioDownloaderId = "cove.official.downloaders.ytdlp/audio";
+    private const string ExtensionId = "cove.community.downloaders.ytdlp";
+    private const string VideoDownloaderId = "cove.community.downloaders.ytdlp/video";
+    private const string AudioDownloaderId = "cove.community.downloaders.ytdlp/audio";
 
     private static readonly DownloaderDescriptor VideoDownloader = new(
         VideoDownloaderId,
@@ -167,8 +167,23 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
         if (request.Entity != expectedEntity)
             throw new InvalidOperationException($"The yt-dlp {expectedEntity.ToString().ToLowerInvariant()} downloader cannot download {request.Entity.ToString().ToLowerInvariant()} items.");
 
+        var logger = host.CreateLogger(typeof(YtDlpDownloaderExtension).FullName ?? nameof(YtDlpDownloaderExtension));
+        logger.LogInformation(
+            "yt-dlp {Entity} download starting for {Url}. DownloaderId: {DownloaderId}. Quality: {QualityId}",
+            expectedEntity,
+            request.Url,
+            request.DownloaderId,
+            request.QualityId);
+
         host.ReportProgress(0.05d, "Resolving yt-dlp metadata...");
         var info = await GetMediaInfoAsync(request.Url, ct);
+        logger.LogDebug(
+            "yt-dlp metadata resolved for {Url}. Title: {Title}. HasVideo: {HasVideo}. HasAudio: {HasAudio}.",
+            request.Url,
+            info.Title,
+            info.HasVideo,
+            info.HasAudio);
+
         if (expectedEntity == DownloaderEntity.Scene && !info.HasVideo)
             throw new InvalidOperationException("yt-dlp did not report a downloadable video stream for this URL.");
 
@@ -191,6 +206,8 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
             ]),
             ct);
 
+        LogCommandResult(logger, request.Url, "download", command, includeStandardOutput: false);
+
         EnsureSuccess(command, "yt-dlp failed to download the media");
 
         var downloadedFile = FindDownloadedFile(host.TempDirectory)
@@ -198,6 +215,11 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
 
         host.ReportProgress(0.95d, "Download completed.");
         var originalFilename = BuildOriginalFileName(info.Title, info.MediaId, Path.GetExtension(downloadedFile), expectedEntity == DownloaderEntity.Audio ? ".m4a" : ".mp4");
+        logger.LogDebug(
+            "yt-dlp {Entity} download succeeded for {Url}. OriginalFilename: {OriginalFilename}",
+            expectedEntity,
+            request.Url,
+            originalFilename);
         return new DownloaderResult(
             Path.GetFileName(downloadedFile),
             originalFilename,
@@ -210,10 +232,23 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
         {
             return await GetMediaInfoAsync(url, ct);
         }
-        catch
+        catch (InvalidOperationException ex) when (IsNoMatchError(ex.Message))
         {
             return null;
         }
+        catch
+        {
+            throw;
+        }
+    }
+
+    private static bool IsNoMatchError(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return false;
+
+        return message.Contains("Unsupported URL", StringComparison.OrdinalIgnoreCase)
+            || message.Contains("No suitable extractor", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<YtDlpMediaInfo> GetMediaInfoAsync(string url, CancellationToken ct)
@@ -301,7 +336,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
             _services.GetRequiredService<IHttpClientFactory>(),
             logger);
 
-        return new ProcessYtDlpCommandRunner(resolver);
+        return new ProcessYtDlpCommandRunner(resolver, logger);
     }
 
     private string GetExtensionRoot()
@@ -370,23 +405,24 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
     {
         var hasVideo = false;
         var hasAudio = false;
-        if (!root.TryGetProperty("formats", out var formatsElement) || formatsElement.ValueKind != JsonValueKind.Array)
+
+        if (root.TryGetProperty("formats", out var formatsElement) && formatsElement.ValueKind == JsonValueKind.Array)
         {
-            var vcodec = GetString(root, "vcodec");
-            var acodec = GetString(root, "acodec");
-            return (!string.IsNullOrWhiteSpace(vcodec) && !string.Equals(vcodec, "none", StringComparison.OrdinalIgnoreCase),
-                !string.IsNullOrWhiteSpace(acodec) && !string.Equals(acodec, "none", StringComparison.OrdinalIgnoreCase));
+            foreach (var format in formatsElement.EnumerateArray())
+            {
+                var vcodec = GetString(format, "vcodec");
+                var acodec = GetString(format, "acodec");
+                if (!string.IsNullOrWhiteSpace(vcodec) && !string.Equals(vcodec, "none", StringComparison.OrdinalIgnoreCase))
+                    hasVideo = true;
+                if (!string.IsNullOrWhiteSpace(acodec) && !string.Equals(acodec, "none", StringComparison.OrdinalIgnoreCase))
+                    hasAudio = true;
+            }
         }
 
-        foreach (var format in formatsElement.EnumerateArray())
-        {
-            var vcodec = GetString(format, "vcodec");
-            var acodec = GetString(format, "acodec");
-            if (!string.IsNullOrWhiteSpace(vcodec) && !string.Equals(vcodec, "none", StringComparison.OrdinalIgnoreCase))
-                hasVideo = true;
-            if (!string.IsNullOrWhiteSpace(acodec) && !string.Equals(acodec, "none", StringComparison.OrdinalIgnoreCase))
-                hasAudio = true;
-        }
+        var rootVcodec = GetString(root, "vcodec");
+        var rootAcodec = GetString(root, "acodec");
+        hasVideo = hasVideo || (!string.IsNullOrWhiteSpace(rootVcodec) && !string.Equals(rootVcodec, "none", StringComparison.OrdinalIgnoreCase));
+        hasAudio = hasAudio || (!string.IsNullOrWhiteSpace(rootAcodec) && !string.Equals(rootAcodec, "none", StringComparison.OrdinalIgnoreCase));
 
         return (hasVideo, hasAudio);
     }
@@ -524,6 +560,104 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
         return OfficialDownloaderUtilities.SanitizeFileName($"{title}{suffix}{safeExtension}");
     }
 
+    private static string FormatAvailableHeights(IReadOnlyList<int> heights)
+    {
+        return heights.Count == 0 ? "none" : string.Join(", ", heights);
+    }
+
+    private static void LogCommandResult(ILogger logger, string url, string operation, YtDlpCommandResult command, bool includeStandardOutput)
+    {
+        if (command.ExitCode == 0)
+        {
+            logger.LogDebug(
+                "yt-dlp {Operation} command completed for {Url}. ExitCode: {ExitCode}.",
+                operation,
+                url,
+                command.ExitCode);
+            return;
+        }
+
+        logger.LogWarning(
+            "yt-dlp {Operation} command failed for {Url}. ExitCode: {ExitCode}. stderr: {StandardError}. stdout: {StandardOutput}",
+            operation,
+            url,
+            command.ExitCode,
+            SummarizeProcessOutput(command.StandardError),
+            includeStandardOutput ? SummarizeProcessOutput(command.StandardOutput) : string.Empty);
+    }
+
+    private static string SummarizeProcessOutput(string? output)
+    {
+        if (string.IsNullOrWhiteSpace(output))
+            return string.Empty;
+
+        var lines = output
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(line => !string.IsNullOrWhiteSpace(line))
+            .ToArray();
+        if (lines.Length == 0)
+            return string.Empty;
+
+        var tail = lines.Length <= 8 ? lines : lines[^8..];
+        var summary = string.Join(" | ", tail);
+        return summary.Length <= 1500 ? summary : summary[..1500];
+    }
+
+    private static string FormatYtDlpArguments(IReadOnlyList<string> arguments)
+    {
+        var formatted = new List<string>();
+        var redactNext = false;
+
+        foreach (var argument in arguments)
+        {
+            if (redactNext)
+            {
+                formatted.Add("<redacted>");
+                redactNext = false;
+                continue;
+            }
+
+            var optionName = argument.Split('=', 2)[0];
+            if (IsSensitiveYtDlpOption(optionName))
+            {
+                if (argument.Contains('=', StringComparison.Ordinal))
+                {
+                    formatted.Add($"{optionName}=<redacted>");
+                }
+                else
+                {
+                    formatted.Add(argument);
+                    redactNext = true;
+                }
+
+                continue;
+            }
+
+            formatted.Add(argument);
+        }
+
+        return string.Join(' ', formatted.Select(QuoteArgumentForLog));
+    }
+
+    private static bool IsSensitiveYtDlpOption(string optionName)
+    {
+        return optionName.Equals("--password", StringComparison.OrdinalIgnoreCase)
+            || optionName.Equals("--username", StringComparison.OrdinalIgnoreCase)
+            || optionName.Equals("--cookies", StringComparison.OrdinalIgnoreCase)
+            || optionName.Equals("--cookies-from-browser", StringComparison.OrdinalIgnoreCase)
+            || optionName.Equals("--proxy", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string QuoteArgumentForLog(string argument)
+    {
+        if (argument.Length == 0)
+            return "\"\"";
+
+        return argument.Any(char.IsWhiteSpace)
+            ? $"\"{argument.Replace("\"", "\\\"")}" + "\""
+            : argument;
+    }
+
     private static void EnsureSuccess(YtDlpCommandResult command, string message)
     {
         if (command.ExitCode == 0)
@@ -551,6 +685,15 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
             return string.Concat(
                 detail,
                 " If this site requires a logged-in or browser-like request, configure cookies, browser cookies, or impersonation in the extension settings or via the COVE_YTDLP_* environment variables.");
+        }
+
+        if (fullDetail.Contains("HTTP Error 410", StringComparison.OrdinalIgnoreCase)
+            || fullDetail.Contains("410: Gone", StringComparison.OrdinalIgnoreCase)
+            || fullDetail.Contains("410 Gone", StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Concat(
+                detail,
+                " The site rejected the current extraction request. Update yt-dlp first; if the site now requires a browser session, configure cookies or impersonation in the extension settings or via the COVE_YTDLP_* environment variables.");
         }
 
         return detail;
@@ -647,12 +790,50 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
 
     private sealed record YtDlpMediaInfo(string NormalizedUrl, string Title, string? MediaId, bool HasVideo, bool HasAudio, IReadOnlyList<int> AvailableHeights, ScrapedSceneDto SceneMetadata);
 
-    private sealed class ProcessYtDlpCommandRunner(YtDlpExecutableResolver executableResolver) : IYtDlpCommandRunner
+    private sealed class ProcessYtDlpCommandRunner(YtDlpExecutableResolver executableResolver, ILogger logger) : IYtDlpCommandRunner
     {
         public async Task<YtDlpCommandResult> RunAsync(IEnumerable<string> arguments, CancellationToken ct)
         {
+            var argumentList = arguments.ToList();
             var executable = await executableResolver.ResolveAsync(ct);
-            return await RunProcessAsync(executable, arguments, ct);
+            var isVersionProbe = argumentList.Count == 1 && string.Equals(argumentList[0], "--version", StringComparison.Ordinal);
+            if (!isVersionProbe)
+            {
+                logger.LogInformation(
+                    "Running yt-dlp executable {Executable}. Arguments: {Arguments}",
+                    executable,
+                    FormatYtDlpArguments(argumentList));
+            }
+
+            var result = await RunProcessAsync(executable, argumentList, ct);
+            if (isVersionProbe)
+            {
+                logger.LogDebug("Resolved yt-dlp executable {Executable}. Version: {Version}", executable, result.StandardOutput);
+            }
+            else if (result.ExitCode == 0)
+            {
+                logger.LogInformation(
+                    "yt-dlp process completed from {Executable}. ExitCode: {ExitCode}. stdoutLength: {StandardOutputLength}. stderrLength: {StandardErrorLength}. stderr: {StandardError}. stdout: {StandardOutput}",
+                    executable,
+                    result.ExitCode,
+                    result.StandardOutput.Length,
+                    result.StandardError.Length,
+                    SummarizeProcessOutput(result.StandardError),
+                    SummarizeProcessOutput(result.StandardOutput));
+            }
+            else
+            {
+                logger.LogWarning(
+                    "yt-dlp process failed from {Executable}. ExitCode: {ExitCode}. stdoutLength: {StandardOutputLength}. stderrLength: {StandardErrorLength}. stderr: {StandardError}. stdout: {StandardOutput}",
+                    executable,
+                    result.ExitCode,
+                    result.StandardOutput.Length,
+                    result.StandardError.Length,
+                    SummarizeProcessOutput(result.StandardError),
+                    SummarizeProcessOutput(result.StandardOutput));
+            }
+
+            return result;
         }
     }
 
@@ -686,6 +867,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
                         throw new InvalidOperationException($"yt-dlp is configured at '{normalizedConfiguredPath}' but is not executable.");
 
                     _resolvedExecutable = normalizedConfiguredPath;
+                    logger.LogInformation("Using configured yt-dlp executable: {Executable}", normalizedConfiguredPath);
                     return normalizedConfiguredPath;
                 }
 
@@ -693,13 +875,16 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
                 if (await IsUsableAsync(managedPath, ct))
                 {
                     _resolvedExecutable = managedPath;
+                    logger.LogInformation("Using managed yt-dlp executable: {Executable}", managedPath);
                     return managedPath;
                 }
 
-                if (await IsUsableAsync("yt-dlp", ct))
+                var pathExecutable = ResolveExecutableFromPath("yt-dlp") ?? "yt-dlp";
+                if (await IsUsableAsync(pathExecutable, ct))
                 {
-                    _resolvedExecutable = "yt-dlp";
-                    return "yt-dlp";
+                    _resolvedExecutable = pathExecutable;
+                    logger.LogInformation("Using yt-dlp executable from PATH: {Executable}", pathExecutable);
+                    return pathExecutable;
                 }
 
                 _resolvedExecutable = await DownloadManagedBinaryAsync(ct);
@@ -720,6 +905,44 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
         {
             var fileName = OperatingSystem.IsWindows() ? "yt-dlp.exe" : "yt-dlp";
             return Path.Combine(extensionRoot, "tools", fileName);
+        }
+
+        private static string? ResolveExecutableFromPath(string executable)
+        {
+            if (Path.IsPathRooted(executable)
+                || executable.Contains(Path.DirectorySeparatorChar)
+                || executable.Contains(Path.AltDirectorySeparatorChar))
+            {
+                return File.Exists(executable) ? executable : null;
+            }
+
+            var pathValue = Environment.GetEnvironmentVariable("PATH");
+            if (string.IsNullOrWhiteSpace(pathValue))
+                return null;
+
+            var extensions = OperatingSystem.IsWindows()
+                ? (Environment.GetEnvironmentVariable("PATHEXT") ?? ".COM;.EXE;.BAT;.CMD")
+                    .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                : [string.Empty];
+
+            if (Path.HasExtension(executable))
+                extensions = [string.Empty];
+
+            foreach (var directory in pathValue.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                foreach (var extension in extensions)
+                {
+                    var candidate = Path.Combine(directory, executable + extension.ToLowerInvariant());
+                    if (File.Exists(candidate))
+                        return candidate;
+
+                    candidate = Path.Combine(directory, executable + extension.ToUpperInvariant());
+                    if (File.Exists(candidate))
+                        return candidate;
+                }
+            }
+
+            return null;
         }
 
         private async Task<bool> IsUsableAsync(string executable, CancellationToken ct)

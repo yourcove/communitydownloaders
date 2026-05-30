@@ -1,5 +1,5 @@
 {
-  "id": "cove.official.downloaders",
+  "id": "cove.community.downloaders",
   "name": "Common Downloaders Bundle",
   "version": "1.0.0",
   "description": "Bundle of Cove's common downloader extensions.",
@@ -9,9 +9,9 @@
   "minCoveVersion": "0.0.16",
   "categories": ["downloader", "integration"],
   "dependencies": {
-    "cove.official.downloaders.common-audio": ">=1.0.0",
-    "cove.official.downloaders.common-text": ">=1.0.0",
-    "cove.official.downloaders.reddit": ">=1.0.0",
-    "cove.official.downloaders.ytdlp": ">=1.0.0"
+    "cove.community.downloaders.common-audio": ">=1.0.0",
+    "cove.community.downloaders.common-text": ">=1.0.0",
+    "cove.community.downloaders.reddit": ">=1.0.0",
+    "cove.community.downloaders.ytdlp": ">=1.0.0"
   }
 }

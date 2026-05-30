@@ -1,5 +1,5 @@
 {
-  "id": "cove.official.downloaders.ytdlp",
+  "id": "cove.community.downloaders.ytdlp",
   "name": "yt-dlp Downloader",
   "version": "1.0.0",
   "description": "Generic yt-dlp-powered video and audio downloads.",
@@ -27,7 +27,7 @@
       "displayName": "yt-dlp executable path",
       "type": "STRING",
       "description": "Path to yt-dlp, or yt-dlp when it is available on PATH.",
-      "extensionIds": ["cove.official.downloaders.ytdlp"]
+      "extensionIds": ["cove.community.downloaders.ytdlp"]
     }
   ]
 }

@@ -8,8 +8,8 @@ namespace Cove.Extensions.CommunityDownloaders;
 
 public sealed class CommonAudioDownloaderExtension : IDownloaderProvider
 {
-    private const string ExtensionId = "cove.official.downloaders.common-audio";
-    public const string AudioDownloaderId = "cove.official.downloaders.common-audio/audio";
+    private const string ExtensionId = "cove.community.downloaders.common-audio";
+    public const string AudioDownloaderId = "cove.community.downloaders.common-audio/audio";
     private IServiceProvider? _services;
 
     private static readonly DownloaderDescriptor AudioDownloader = new(

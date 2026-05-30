@@ -1,5 +1,5 @@
 {
-  "id": "cove.official.downloaders.common-text",
+  "id": "cove.community.downloaders.common-text",
   "name": "Common Text Downloader",
   "version": "1.0.0",
   "description": "Downloads stories from common text sites. Currently supports Literotica.",
