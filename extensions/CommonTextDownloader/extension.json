@@ -5,10 +5,16 @@
   "description": "Downloads stories from common text sites. Currently supports Literotica.",
   "author": "Cove Team",
   "url": "https://github.com/yourcove/communitydownloaders",
-  "minCoveVersion": "0.0.16",
+  "minCoveVersion": "0.0.28",
   "entryDll": "CommonTextDownloader.dll",
-  "categories": ["downloader", "text"],
+  "categories": [
+    "downloader",
+    "text"
+  ],
   "permissions": {
-    "network": ["literotica.com", "*.literotica.com"]
+    "network": [
+      "literotica.com",
+      "*.literotica.com"
+    ]
   }
 }

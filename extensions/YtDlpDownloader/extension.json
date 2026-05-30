@@ -5,12 +5,20 @@
   "description": "Generic yt-dlp-powered video and audio downloads.",
   "author": "Cove Team",
   "url": "https://github.com/yourcove/communitydownloaders",
-  "minCoveVersion": "0.0.16",
+  "minCoveVersion": "0.0.28",
   "entryDll": "YtDlpDownloader.dll",
-  "categories": ["downloader", "metadata", "integration"],
+  "categories": [
+    "downloader",
+    "metadata",
+    "integration"
+  ],
   "permissions": {
-    "network": ["*"],
-    "process": ["yt-dlp"]
+    "network": [
+      "*"
+    ],
+    "process": [
+      "yt-dlp"
+    ]
   },
   "externalDependencies": [
     {
@@ -18,7 +26,9 @@
       "name": "yt-dlp",
       "description": "Command line downloader used for generic video and audio sites.",
       "required": true,
-      "configurationKeys": ["ytDlpPath"]
+      "configurationKeys": [
+        "ytDlpPath"
+      ]
     }
   ],
   "settings": [
@@ -27,7 +37,9 @@
       "displayName": "yt-dlp executable path",
       "type": "STRING",
       "description": "Path to yt-dlp, or yt-dlp when it is available on PATH.",
-      "extensionIds": ["cove.community.downloaders.ytdlp"]
+      "extensionIds": [
+        "cove.community.downloaders.ytdlp"
+      ]
     }
   ]
 }

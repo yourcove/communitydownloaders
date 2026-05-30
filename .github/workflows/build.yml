@@ -9,8 +9,6 @@ on:
 
 env:
   DOTNET_VERSION: '10.0.x'
-  COVE_PLUGINS_VERSION: '0.0.16'
-  COVE_CORE_VERSION: '0.0.16'
 
 permissions:
   contents: write
@@ -106,15 +104,15 @@ jobs:
 
       - name: Restore
         if: steps.check.outputs.match == 'true' && !matrix.extension.manifestOnly
-        run: dotnet restore ${{ matrix.extension.path }} -p:CovePluginsVersion=${{ env.COVE_PLUGINS_VERSION }} -p:CoveCoreVersion=${{ env.COVE_CORE_VERSION }}
+        run: dotnet restore ${{ matrix.extension.path }}
 
       - name: Build
         if: steps.check.outputs.match == 'true' && !matrix.extension.manifestOnly
-        run: dotnet build ${{ matrix.extension.path }} -c Release --no-restore -p:CovePluginsVersion=${{ env.COVE_PLUGINS_VERSION }} -p:CoveCoreVersion=${{ env.COVE_CORE_VERSION }} -p:Version=${{ steps.check.outputs.version }} -p:ContinuousIntegrationBuild=true
+        run: dotnet build ${{ matrix.extension.path }} -c Release --no-restore -p:Version=${{ steps.check.outputs.version }} -p:ContinuousIntegrationBuild=true
 
       - name: Publish
         if: steps.check.outputs.match == 'true' && !matrix.extension.manifestOnly
-        run: dotnet publish ${{ matrix.extension.path }} -c Release -o artifacts/${{ matrix.extension.name }} --no-build -p:CovePluginsVersion=${{ env.COVE_PLUGINS_VERSION }} -p:CoveCoreVersion=${{ env.COVE_CORE_VERSION }} -p:Version=${{ steps.check.outputs.version }} -p:ContinuousIntegrationBuild=true
+        run: dotnet publish ${{ matrix.extension.path }} -c Release -o artifacts/${{ matrix.extension.name }} --no-build -p:Version=${{ steps.check.outputs.version }} -p:ContinuousIntegrationBuild=true
 
       - name: Create manifest-only package root
         if: steps.check.outputs.match == 'true' && matrix.extension.manifestOnly

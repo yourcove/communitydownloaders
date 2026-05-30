@@ -6,8 +6,11 @@
   "author": "Cove Team",
   "url": "https://github.com/yourcove/communitydownloaders",
   "kind": "bundle",
-  "minCoveVersion": "0.0.16",
-  "categories": ["downloader", "integration"],
+  "minCoveVersion": "0.0.28",
+  "categories": [
+    "downloader",
+    "integration"
+  ],
   "dependencies": {
     "cove.community.downloaders.common-audio": ">=1.0.0",
     "cove.community.downloaders.common-text": ">=1.0.0",
