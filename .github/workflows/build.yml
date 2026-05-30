@@ -3,11 +3,7 @@ name: Build and Release Downloaders
 on:
   push:
     tags:
-      - 'common/v*'
-      - 'common-audio/v*'
-      - 'common-text/v*'
-      - 'reddit/v*'
-      - 'ytdlp/v*'
+      - '*/v*'
   pull_request:
     branches: [main]
 
@@ -28,10 +24,53 @@ jobs:
       - uses: actions/checkout@v6
       - name: Validate extension catalog and manifests
         run: node scripts/validate-extension-repo.mjs
+      - name: Validate release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const tag = process.env.GITHUB_REF_NAME;
+          const catalog = JSON.parse(fs.readFileSync('extensions/catalog.json', 'utf8'));
+          const matches = catalog.extensions.filter(entry => tag.startsWith(entry.tagPrefix));
+          const supportedTags = catalog.extensions.map(entry => `${entry.tagPrefix}v1.0.0`).sort();
+
+          if (matches.length !== 1) {
+            console.error(`ERROR: Release tag '${tag}' does not match exactly one extension tag prefix.`);
+            console.error('Use the lowercase tagPrefix from extensions/catalog.json, for example:');
+            for (const supportedTag of supportedTags) console.error(`  - ${supportedTag}`);
+            process.exit(1);
+          }
+
+          const extension = matches[0];
+          const versionTag = tag.slice(extension.tagPrefix.length);
+          if (!/^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(versionTag)) {
+            console.error(`ERROR: Release tag '${tag}' has invalid version '${versionTag}'. Expected a semantic version like '${extension.tagPrefix}v1.0.0'.`);
+            process.exit(1);
+          }
+
+          console.log(`Release tag '${tag}' targets ${extension.name} (${extension.id}) version ${versionTag.slice(1)}.`);
+          NODE
       - name: Build extension matrix
         id: catalog
         run: |
-          node -e "const fs=require('fs'); const catalog=require('./extensions/catalog.json'); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'matrix=' + JSON.stringify({ extension: catalog.extensions }) + '\n');"
+          node <<'NODE'
+          const fs = require('fs');
+          const catalog = JSON.parse(fs.readFileSync('extensions/catalog.json', 'utf8'));
+          let extensions = catalog.extensions;
+
+          if (process.env.GITHUB_EVENT_NAME !== 'pull_request') {
+            const tag = process.env.GITHUB_REF_NAME;
+            extensions = extensions.filter(entry => tag.startsWith(entry.tagPrefix));
+          }
+
+          if (extensions.length === 0) {
+            console.error(`ERROR: No extension matches release tag '${process.env.GITHUB_REF_NAME}'.`);
+            process.exit(1);
+          }
+
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `matrix=${JSON.stringify({ extension: extensions })}\n`);
+          NODE
 
   build:
     needs: validate

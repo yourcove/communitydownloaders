@@ -24,12 +24,6 @@ dotnet build extensions/YtDlpDownloader/YtDlpDownloader.csproj
 
 ## Releases
 
-Each extension has its own release tag prefix:
+Create release tags with the lowercase `tagPrefix` from `extensions/catalog.json`, for example `common/v1.0.0` or `ytdlp/v1.0.0`.
 
-- `common/v1.0.0`
-- `common-audio/v1.0.0`
-- `common-text/v1.0.0`
-- `reddit/v1.0.0`
-- `ytdlp/v1.0.0`
-
-The workflow packages only the tagged extension and uploads a zip named `<extension-id>-<version>.zip` for the registry.
+The workflow accepts any `<tagPrefix>v<semver>` tag, packages only the matching catalog entry, and uploads a zip named `<extension-id>-<version>.zip` for the registry.
