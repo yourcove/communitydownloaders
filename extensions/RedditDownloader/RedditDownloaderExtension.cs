@@ -25,7 +25,7 @@ public sealed class RedditDownloaderExtension : IDownloaderProvider
     private static readonly DownloaderDescriptor VideoDownloader = new(
         RedditVideoDownloaderId,
         "Reddit Video",
-        DownloaderEntity.Scene,
+        DownloaderEntity.Video,
         RedditUrlPatterns,
         DownloaderCapabilities.None);
 
@@ -146,7 +146,7 @@ public sealed class RedditDownloaderExtension : IDownloaderProvider
                 request = request with { Url = mediaUrl };
             }
 
-            return await DownloadNativeMediaAsync(request, host, DownloaderEntity.Scene, ".mp4", ct);
+            return await DownloadNativeMediaAsync(request, host, DownloaderEntity.Video, ".mp4", ct);
         }
 
         return null;

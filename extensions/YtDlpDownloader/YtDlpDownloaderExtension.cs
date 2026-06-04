@@ -21,7 +21,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
     private static readonly DownloaderDescriptor VideoDownloader = new(
         VideoDownloaderId,
         "yt-dlp Video",
-        DownloaderEntity.Scene,
+        DownloaderEntity.Video,
         ["https://*/*", "http://*/*"],
         DownloaderCapabilities.MultiQuality | DownloaderCapabilities.ResumeSupported | DownloaderCapabilities.InlineMetadata);
 
@@ -113,7 +113,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
     public async Task<DownloaderResult?> DownloadAsync(DownloaderRequest request, IDownloaderHost host, CancellationToken ct)
     {
         if (string.Equals(request.DownloaderId, VideoDownloader.Id, StringComparison.OrdinalIgnoreCase))
-            return await DownloadMediaAsync(request, host, DownloaderEntity.Scene, ct);
+            return await DownloadMediaAsync(request, host, DownloaderEntity.Video, ct);
 
         if (string.Equals(request.DownloaderId, AudioDownloader.Id, StringComparison.OrdinalIgnoreCase))
             return await DownloadMediaAsync(request, host, DownloaderEntity.Audio, ct);
@@ -184,7 +184,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
             info.HasVideo,
             info.HasAudio);
 
-        if (expectedEntity == DownloaderEntity.Scene && !info.HasVideo)
+        if (expectedEntity == DownloaderEntity.Video && !info.HasVideo)
             throw new InvalidOperationException("yt-dlp did not report a downloadable video stream for this URL.");
 
         if (expectedEntity == DownloaderEntity.Audio && !info.HasAudio)
@@ -201,7 +201,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
                 "--output",
                 outputTemplate,
                 "--format",
-                expectedEntity == DownloaderEntity.Scene ? BuildVideoFormatSelector(request.QualityId) : "bestaudio/best",
+                expectedEntity == DownloaderEntity.Video ? BuildVideoFormatSelector(request.QualityId) : "bestaudio/best",
                 info.NormalizedUrl,
             ]),
             ct);
@@ -223,7 +223,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
         return new DownloaderResult(
             Path.GetFileName(downloadedFile),
             originalFilename,
-            InlineSceneMetadata: expectedEntity == DownloaderEntity.Scene ? info.SceneMetadata : null);
+            InlineVideoMetadata: expectedEntity == DownloaderEntity.Video ? info.VideoMetadata : null);
     }
 
     private async Task<YtDlpMediaInfo?> TryGetMediaInfoAsync(string url, CancellationToken ct)
@@ -275,7 +275,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
                 hasVideo,
                 hasAudio,
                 ExtractAvailableHeights(root),
-                BuildSceneMetadata(root, normalizedUrl.Trim(), title.Trim(), string.IsNullOrWhiteSpace(mediaId) ? null : mediaId.Trim()));
+                BuildVideoMetadata(root, normalizedUrl.Trim(), title.Trim(), string.IsNullOrWhiteSpace(mediaId) ? null : mediaId.Trim()));
         }
         catch (JsonException ex)
         {
@@ -443,7 +443,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
         return "best";
     }
 
-    private static ScrapedSceneDto BuildSceneMetadata(JsonElement root, string normalizedUrl, string title, string? mediaId)
+    private static ScrapedVideoDto BuildVideoMetadata(JsonElement root, string normalizedUrl, string title, string? mediaId)
     {
         var performerNames = ExtractStringArray(root, "cast");
         AddIfPresent(performerNames, GetString(root, "uploader", "creator"));
@@ -452,7 +452,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
         if (tagNames.Count == 0)
             tagNames = ExtractStringArray(root, "categories");
 
-        return new ScrapedSceneDto
+        return new ScrapedVideoDto
         {
             Title = title,
             Code = mediaId,
@@ -466,7 +466,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
         };
     }
 
-    private static string? ResolveSceneUrl(SceneScrapeInput input)
+    private static string? ResolveVideoUrl(VideoScrapeInput input)
     {
         if (!string.IsNullOrWhiteSpace(input.Url) && OfficialDownloaderUtilities.IsHttpUrl(input.Url))
             return input.Url.Trim();
@@ -788,7 +788,7 @@ public sealed class YtDlpDownloaderExtension : IDownloaderProvider
         return new YtDlpCommandResult(process.ExitCode, (await stdoutTask).Trim(), (await stderrTask).Trim());
     }
 
-    private sealed record YtDlpMediaInfo(string NormalizedUrl, string Title, string? MediaId, bool HasVideo, bool HasAudio, IReadOnlyList<int> AvailableHeights, ScrapedSceneDto SceneMetadata);
+    private sealed record YtDlpMediaInfo(string NormalizedUrl, string Title, string? MediaId, bool HasVideo, bool HasAudio, IReadOnlyList<int> AvailableHeights, ScrapedVideoDto VideoMetadata);
 
     private sealed class ProcessYtDlpCommandRunner(YtDlpExecutableResolver executableResolver, ILogger logger) : IYtDlpCommandRunner
     {

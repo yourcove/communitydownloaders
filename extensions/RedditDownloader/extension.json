@@ -5,7 +5,7 @@
   "description": "Downloads Reddit-hosted post media and delegates linked URLs to other registered downloaders.",
   "author": "Cove Team",
   "url": "https://github.com/yourcove/communitydownloaders",
-  "minCoveVersion": "0.0.28",
+  "minCoveVersion": "0.0.32",
   "entryDll": "RedditDownloader.dll",
   "categories": [
     "downloader",
