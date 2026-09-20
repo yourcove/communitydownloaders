@@ -2,6 +2,7 @@ using System.Text.Json;
 using Cove.Core.DTOs;
 using Cove.Plugins;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Cove.Extensions.CommunityDownloaders;
 
@@ -13,6 +14,11 @@ public sealed class RedditDownloaderExtension : IDownloaderProvider
     private const string DivertDownloaderId = "cove.community.downloaders.reddit/divert";
     private static readonly string[] RedditUrlPatterns = ["reddit.com/*", "*.reddit.com/*", "redd.it/*", "*.redd.it/*"];
     private static readonly string[] RedgifsUrlPatterns = ["redgifs.com/*", "*.redgifs.com/*", "redgif.com/*", "*.redgif.com/*"];
+    private const string UserAgent = "web:cove.community.downloaders.reddit:v1.0";
+
+
+    // Reddit answers its .json endpoints only to clients carrying a browsing session; see RedditSession.
+    private static readonly RedditSession Reddit = new(UserAgent);
     private IServiceProvider? _services;
 
     private static readonly DownloaderDescriptor ImageDownloader = new(
@@ -186,16 +192,25 @@ public sealed class RedditDownloaderExtension : IDownloaderProvider
     {
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, BuildRedditJsonUrl(url));
-            request.Headers.UserAgent.ParseAdd("CoveRedditDownloader/1.0");
-            using var response = await GetHttpClient().SendAsync(request, ct);
+            var jsonUrl = BuildRedditJsonUrl(url);
+            using var response = await Reddit.SendAsync(
+                () => new HttpRequestMessage(HttpMethod.Get, jsonUrl),
+                HttpCompletionOption.ResponseContentRead,
+                ct);
             if (!response.IsSuccessStatusCode)
+            {
+                // Reddit refuses posts it will not serve to this session (403), and hides removed ones (404).
+                Logger?.LogWarning("Reddit returned {Status} for {Url}, so the post could not be read.", (int)response.StatusCode, jsonUrl);
                 return null;
+            }
 
             var json = await response.Content.ReadAsStringAsync(ct);
             using var document = JsonDocument.Parse(json);
             if (document.RootElement.ValueKind != JsonValueKind.Array || document.RootElement.GetArrayLength() == 0)
+            {
+                Logger?.LogWarning("Reddit answered {Url} with {Kind} rather than a post listing.", jsonUrl, document.RootElement.ValueKind);
                 return null;
+            }
 
             var listing = document.RootElement[0];
             if (!listing.TryGetProperty("data", out var data)
@@ -203,6 +218,7 @@ public sealed class RedditDownloaderExtension : IDownloaderProvider
                 || children.ValueKind != JsonValueKind.Array
                 || children.GetArrayLength() == 0)
             {
+                Logger?.LogWarning("Reddit's listing for {Url} held no post.", jsonUrl);
                 return null;
             }
 
@@ -215,8 +231,9 @@ public sealed class RedditDownloaderExtension : IDownloaderProvider
 
             return new RedditPostInfo(url, metadata.Title, metadata.Details, metadata.TagNames, nativeMedia, linkedUrls);
         }
-        catch
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            Logger?.LogWarning(ex, "Could not read the Reddit post {Url}.", url);
             return null;
         }
     }
@@ -634,6 +651,8 @@ public sealed class RedditDownloaderExtension : IDownloaderProvider
 
         return null;
     }
+
+    private ILogger? Logger => _services?.GetService<ILoggerFactory>()?.CreateLogger<RedditDownloaderExtension>();
 
     private HttpClient GetHttpClient()
     {

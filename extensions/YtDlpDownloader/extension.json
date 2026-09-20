@@ -1,11 +1,11 @@
 {
   "id": "cove.community.downloaders.ytdlp",
   "name": "yt-dlp Downloader",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Generic yt-dlp-powered video and audio downloads.",
   "author": "Cove Team",
   "url": "https://github.com/yourcove/communitydownloaders",
-  "minCoveVersion": "0.0.32",
+  "minCoveVersion": "1.5.0",
   "entryDll": "YtDlpDownloader.dll",
   "categories": [
     "downloader",
@@ -37,6 +37,15 @@
       "displayName": "yt-dlp executable path",
       "type": "STRING",
       "description": "Path to yt-dlp, or yt-dlp when it is available on PATH.",
+      "extensionIds": [
+        "cove.community.downloaders.ytdlp"
+      ]
+    },
+    {
+      "name": "siteRequestIntervalSeconds",
+      "displayName": "Seconds between requests to a site you sign in to",
+      "type": "NUMBER",
+      "description": "Minimum seconds between starting requests to a site with a saved login. Defaults to 0.15; raise it if a site rate-limits a large batch.",
       "extensionIds": [
         "cove.community.downloaders.ytdlp"
       ]
