@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <EnableDynamicLoading>true</EnableDynamicLoading>
-    <CoveMinVersion Condition="'$(CoveMinVersion)' == ''">0.0.32</CoveMinVersion>
+    <CoveMinVersion Condition="'$(CoveMinVersion)' == ''">1.5.0</CoveMinVersion>
     <CovePluginsVersion Condition="'$(CovePluginsVersion)' == ''">$(CoveMinVersion)</CovePluginsVersion>
     <CoveCoreVersion Condition="'$(CoveCoreVersion)' == ''">$(CoveMinVersion)</CoveCoreVersion>
     <UseLocalCovePlugins Condition="'$(UseLocalCovePlugins)' == '' and Exists('$(MSBuildThisFileDirectory)..\cove\src\Cove.Plugins\Cove.Plugins.csproj')">true</UseLocalCovePlugins>
